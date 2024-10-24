@@ -225,9 +225,34 @@ INSERT INTO GESTORES_DE_DATOS.Producto_SubRubro_Rubro(producto_id,sub_rubro_id,r
 
 /*Tercer nivel - Depende del segundo
 
-Almacen (depende de Localidad, Provincia)
-Domicilio (depende de Usuario, Localidad, Provincia)
-Factura (depende de Usuario)
+Almacen (depende de Localidad, Provincia)*/
+
+INSERT INTO GESTORES_DE_DATOS.Almacen(almacen_codigo,almacen_calle,almacen_nro_calle,almacen_costo_al_dia,localidad_id,provincia_id)
+	SELECT DISTINCT ALMACEN_CODIGO,ALMACEN_CALLE,ALMACEN_NRO_CALLE,ALMACEN_COSTO_DIA_AL,l.localidad_id,p.provincia_id
+		FROM gd_esquema.Maestra
+		JOIN GESTORES_DE_DATOS.Provincia p ON p.provincia = ALMACEN_PROVINCIA
+		JOIN GESTORES_DE_DATOS.Localidad l ON l.localidad = ALMACEN_Localidad
+		WHERE ALMACEN_CODIGO IS NOT NULL
+		ORDER BY 1
+/*Domicilio (depende de Usuario, Localidad, Provincia) LE FALTA EL USUARIO */
+
+INSERT INTO GESTORES_DE_DATOS.Domicilio(domicilio_calle,domicilio_cp,domicilio_depto,localidad_id,domicilio_nro_calle,domicilio_piso,provincia_id)
+	SELECT * FROM
+		((SELECT DISTINCT CLI_USUARIO_DOMICILIO_CALLE,CLI_USUARIO_DOMICILIO_CP, CLI_USUARIO_DOMICILIO_DEPTO,l.localidad_id,
+			CLI_USUARIO_DOMICILIO_NRO_CALLE,CLI_USUARIO_DOMICILIO_PISO,l.provincia_id
+			FROM gd_esquema.Maestra
+			JOIN GESTORES_DE_DATOS.Provincia p ON p.provincia = CLI_USUARIO_DOMICILIO_PROVINCIA
+			JOIN GESTORES_DE_DATOS.Localidad l ON l.localidad = CLI_USUARIO_DOMICILIO_LOCALIDAD AND l.provincia_id = p.provincia_id
+			WHERE CLI_USUARIO_DOMICILIO_CALLE IS NOT NULL)
+		UNION
+		(SELECT DISTINCT VEN_USUARIO_DOMICILIO_CALLE,VEN_USUARIO_DOMICILIO_CP, VEN_USUARIO_DOMICILIO_DEPTO,l.localidad_id,
+			VEN_USUARIO_DOMICILIO_NRO_CALLE,VEN_USUARIO_DOMICILIO_PISO,l.provincia_id
+			FROM gd_esquema.Maestra
+			JOIN GESTORES_DE_DATOS.Provincia p ON p.provincia = VEN_USUARIO_DOMICILIO_PROVINCIA
+			JOIN GESTORES_DE_DATOS.Localidad l ON l.localidad = VEN_USUARIO_DOMICILIO_LOCALIDAD AND l.provincia_id = p.provincia_id
+			WHERE VEN_USUARIO_DOMICILIO_CALLE IS NOT NULL)) as aux
+
+/*Factura (depende de Usuario)
 Pago (depende de Venta, Medio_pago, Tipo_medio_pago)
 
 Cuarto nivel:

@@ -133,19 +133,17 @@ INSERT INTO GESTORES_DE_DATOS.Vendedor(vendedor_id, vendedor_razon_social, vende
 
 -- Producto
 
-INSERT INTO GESTORES_DE_DATOS.Producto(producto_id, producto_codigo, producto_descripcion, producto_precio)
+INSERT INTO GESTORES_DE_DATOS.Producto(producto_id, producto_codigo, producto_descripcion)
     SELECT DISTINCT
         row_number() over (order by PRODUCTO_CODIGO),
         PRODUCTO_CODIGO,
-        PRODUCTO_DESCRIPCION,
-        PRODUCTO_PRECIO
+        PRODUCTO_DESCRIPCION
     FROM gd_esquema.Maestra
     WHERE
         PRODUCTO_CODIGO IS NOT NULL
     GROUP BY
         PRODUCTO_CODIGO,
-        PRODUCTO_DESCRIPCION,
-        PRODUCTO_PRECIO
+        PRODUCTO_DESCRIPCION
 
 /*
 Segundo nivel - Depende del primero
@@ -179,19 +177,53 @@ INSERT INTO GESTORES_DE_DATOS.Medio_pago(medio_pago_id,medio_pago,tipo_medio_pag
 			JOIN GESTORES_DE_DATOS.Tipo_medio_pago t ON t.tipo_medio_pago = PAGO_TIPO_MEDIO_PAGO
 		WHERE PAGO_MEDIO_PAGO IS NOT NULL) as aux
 
-/*Usuario (depende de Cliente, Vendedor)*/
+/*Usuario (depende de Cliente, Vendedor) ESTO LE FALTA PONER CLIENTE ID Y VENDEDOR ID*/ 
+
+INSERT INTO GESTORES_DE_DATOS.Usuario(usuario_id,usuario_nombre,usuario_pass,usuario_fecha_creacion)
+	SELECT row_number() over (order by aux.usuario_nombre), aux.usuario_nombre,aux.usuario_pass,
+		aux.usuario_fecha_creacion  FROM
+			((SELECT DISTINCT [VEN_USUARIO_NOMBRE] usuario_nombre
+			  ,[VEN_USUARIO_PASS] usuario_pass
+			  ,VEN_USUARIO_FECHA_CREACION usuario_fecha_creacion
+			  ,VENDEDOR_MAIL
+			  FROM [GD2C2024].[gd_esquema].[Maestra]
+			  WHERE VEN_USUARIO_NOMBRE IS NOT NULL)
+			UNION
+			(SELECT DISTINCT CLI_USUARIO_NOMBRE usuario_nombre,
+					CLI_USUARIO_PASS usuario_pass,
+					CLI_USUARIO_FECHA_CREACION usuario_fecha_creacion,
+					CLIENTE_MAIL
+			  FROM [GD2C2024].[gd_esquema].[Maestra]
+			  WHERE CLI_USUARIO_NOMBRE IS NOT NULL)) as aux
 
 /*Venta (depende de Cliente)*/
 
 INSERT INTO GESTORES_DE_DATOS.Venta(venta_codigo,venta_fecha,venta_total,cliente_id)
-	SELECT VENTA_CODIGO,VENTA_FECHA,VENTA_TOTAL,u.cliente_id
-		FROM gd_esquema.Maestra
-		JOIN GESTORES_DE_DATOS.Usuario u ON u.usuario_nombre = CLI_USUARIO_NOMBRE
+	SELECT VENTA_CODIGO,VENTA_FECHA,VENTA_TOTAL,c.cliente_id
+		FROM gd_esquema.Maestra m
+		JOIN GESTORES_DE_DATOS.Cliente c ON c.cliente_nombre = m.cliente_nombre 
+			AND c.cliente_apellido = m.CLIENTE_APELLIDO AND c.cliente_dni = m.CLIENTE_DNI 
 
-/*Marca_Modelo_Producto (depende de Marca, Modelo, Producto)
-Producto_SubRubro_Rubro (depende de Producto, Sub_rubro, Rubro)
+/*Marca_Modelo_Producto (depende de Marca, Modelo, Producto) NO SE SI EL PRECIO ESTA DEL TODO BIEN*/
 
-Tercer nivel - Depende del segundo
+INSERT INTO GESTORES_DE_DATOS.Marca_Modelo_Producto(marca_id,modelo_id,producto_id,producto_precio)
+		SELECT DISTINCT ma.marca_id,mo.modelo_id,p.producto_id,m.PRODUCTO_PRECIO
+			FROM gd_esquema.Maestra m
+			JOIN GESTORES_DE_DATOS.Modelo mo ON mo.modelo_codigo = m.PRODUCTO_MOD_CODIGO
+			JOIN GESTORES_DE_DATOS.Marca ma ON ma.marca = m.PRODUCTO_MARCA
+			JOIN GESTORES_DE_DATOS.Producto p ON p.producto_codigo = m.PRODUCTO_CODIGO AND p.producto_descripcion = m.PRODUCTO_DESCRIPCION
+
+/*Producto_SubRubro_Rubro (depende de Producto, Sub_rubro, Rubro)*/
+
+INSERT INTO GESTORES_DE_DATOS.Producto_SubRubro_Rubro(producto_id,sub_rubro_id,rubro_id)
+	SELECT DISTINCT su.sub_rubro_id,ru.rubro_id,p.producto_id
+		FROM gd_esquema.Maestra m
+		JOIN GESTORES_DE_DATOS.Rubro ru ON ru.rubro_descripcion = m.PRODUCTO_RUBRO_DESCRIPCION
+		JOIN GESTORES_DE_DATOS.Sub_rubro su ON su.sub_rubro = m.PRODUCTO_SUB_RUBRO
+		JOIN GESTORES_DE_DATOS.Producto p ON m.PRODUCTO_CODIGO = p.producto_codigo
+		WHERE m.PRODUCTO_CODIGO IS NOT NULL
+
+/*Tercer nivel - Depende del segundo
 
 Almacen (depende de Localidad, Provincia)
 Domicilio (depende de Usuario, Localidad, Provincia)

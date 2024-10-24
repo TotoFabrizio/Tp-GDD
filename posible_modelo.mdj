@@ -983,20 +983,35 @@
 											"top": 848,
 											"width": 232.43701171875,
 											"height": 13
+										},
+										{
+											"_type": "ERDColumnView",
+											"_id": "AAAAAAGSvrt2no/lOBY=",
+											"_parent": {
+												"$ref": "AAAAAAGR9yUlLaC+M80="
+											},
+											"model": {
+												"$ref": "AAAAAAGSvrt2ko/iTxU="
+											},
+											"font": "Arial;13;0",
+											"left": 1613,
+											"top": 863,
+											"width": 232.43701171875,
+											"height": 13
 										}
 									],
 									"font": "Arial;13;0",
 									"left": 1608,
 									"top": 783,
 									"width": 242.43701171875,
-									"height": 83
+									"height": 98
 								}
 							],
 							"font": "Arial;13;0",
 							"left": 1608,
 							"top": 760,
 							"width": 242.43701171875,
-							"height": 106,
+							"height": 121,
 							"nameLabel": {
 								"$ref": "AAAAAAGR9yUlLaC9V8k="
 							},
@@ -6529,6 +6544,16 @@
 							"name": "cliente_dni",
 							"type": "decimal",
 							"length": "18,0"
+						},
+						{
+							"_type": "ERDColumn",
+							"_id": "AAAAAAGSvrt2ko/iTxU=",
+							"_parent": {
+								"$ref": "AAAAAAGR9yUlLaC6DDg="
+							},
+							"name": "cliente_MAIL",
+							"type": "nvarchar",
+							"length": "50"
 						}
 					]
 				},

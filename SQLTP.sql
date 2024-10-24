@@ -79,12 +79,12 @@ CREATE TABLE GESTORES_DE_DATOS.Producto(
 	producto_id DECIMAL(18,0),
 	producto_codigo NVARCHAR(50),
 	producto_descripcion NVARCHAR(50),
-	producto_precio DECIMAL(18,2)
 	PRIMARY KEY (producto_id));
 CREATE TABLE GESTORES_DE_DATOS.Marca_Modelo_Producto(
 	marca_id DECIMAL(18,0),
 	modelo_id DECIMAL(18,0),
 	producto_id DECIMAL(18,0),
+	producto_precio DECIMAL(18,2),
 	PRIMARY KEY (marca_id,modelo_id,producto_id),
 	FOREIGN KEY (marca_id) REFERENCES GESTORES_DE_DATOS.Marca(marca_id),
 	FOREIGN KEY (modelo_id) REFERENCES GESTORES_DE_DATOS.Modelo(modelo_id),

@@ -231,21 +231,21 @@ INSERT INTO GESTORES_DE_DATOS.Almacen(almacen_codigo,almacen_calle,almacen_nro_c
 	SELECT DISTINCT ALMACEN_CODIGO,ALMACEN_CALLE,ALMACEN_NRO_CALLE,ALMACEN_COSTO_DIA_AL,l.localidad_id,p.provincia_id
 		FROM gd_esquema.Maestra
 		JOIN GESTORES_DE_DATOS.Provincia p ON p.provincia = ALMACEN_PROVINCIA
-		JOIN GESTORES_DE_DATOS.Localidad l ON l.localidad = ALMACEN_Localidad
+		JOIN GESTORES_DE_DATOS.Localidad l ON l.localidad = ALMACEN_Localidad AND p.provincia_id = l.provincia_id
 		WHERE ALMACEN_CODIGO IS NOT NULL
-		ORDER BY 1
+
 /*Domicilio (depende de Usuario, Localidad, Provincia) LE FALTA EL USUARIO */
 
-INSERT INTO GESTORES_DE_DATOS.Domicilio(domicilio_calle,domicilio_cp,domicilio_depto,localidad_id,domicilio_nro_calle,domicilio_piso,provincia_id)
-	SELECT * FROM
-		((SELECT DISTINCT CLI_USUARIO_DOMICILIO_CALLE,CLI_USUARIO_DOMICILIO_CP, CLI_USUARIO_DOMICILIO_DEPTO,l.localidad_id,
-			CLI_USUARIO_DOMICILIO_NRO_CALLE,CLI_USUARIO_DOMICILIO_PISO,l.provincia_id
+INSERT INTO GESTORES_DE_DATOS.Domicilio(domicilio_id,domicilio_calle,domicilio_cp,domicilio_depto,localidad_id,domicilio_nro_calle,domicilio_piso,provincia_id)
+	SELECT row_number() over (order by aux.calle),aux.calle, aux.cp,aux.depto,aux.loc,aux.nro,aux.piso,aux.prov FROM
+		((SELECT DISTINCT CLI_USUARIO_DOMICILIO_CALLE calle,CLI_USUARIO_DOMICILIO_CP cp, CLI_USUARIO_DOMICILIO_DEPTO depto,l.localidad_id loc,
+			CLI_USUARIO_DOMICILIO_NRO_CALLE nro,CLI_USUARIO_DOMICILIO_PISO piso,l.provincia_id prov
 			FROM gd_esquema.Maestra
 			JOIN GESTORES_DE_DATOS.Provincia p ON p.provincia = CLI_USUARIO_DOMICILIO_PROVINCIA
 			JOIN GESTORES_DE_DATOS.Localidad l ON l.localidad = CLI_USUARIO_DOMICILIO_LOCALIDAD AND l.provincia_id = p.provincia_id
 			WHERE CLI_USUARIO_DOMICILIO_CALLE IS NOT NULL)
 		UNION
-		(SELECT DISTINCT VEN_USUARIO_DOMICILIO_CALLE,VEN_USUARIO_DOMICILIO_CP, VEN_USUARIO_DOMICILIO_DEPTO,l.localidad_id,
+		(SELECT DISTINCT VEN_USUARIO_DOMICILIO_CALLE calle,VEN_USUARIO_DOMICILIO_CP, VEN_USUARIO_DOMICILIO_DEPTO,l.localidad_id,
 			VEN_USUARIO_DOMICILIO_NRO_CALLE,VEN_USUARIO_DOMICILIO_PISO,l.provincia_id
 			FROM gd_esquema.Maestra
 			JOIN GESTORES_DE_DATOS.Provincia p ON p.provincia = VEN_USUARIO_DOMICILIO_PROVINCIA
@@ -253,17 +253,55 @@ INSERT INTO GESTORES_DE_DATOS.Domicilio(domicilio_calle,domicilio_cp,domicilio_d
 			WHERE VEN_USUARIO_DOMICILIO_CALLE IS NOT NULL)) as aux
 
 /*Factura (depende de Usuario)
-Pago (depende de Venta, Medio_pago, Tipo_medio_pago)
+Pago (depende de Venta, Medio_pago, Tipo_medio_pago)*/
 
-Cuarto nivel:
+INSERT INTO GESTORES_DE_DATOS.Pago(pago_id,pago_fecha,pago_importe,pago_nro_tarjeta,pago_fecha_venc_tarjets,
+	pago_cant_cuotas,medio_pago_id,tipo_medio_pago_id,venta_codigo)
+	SELECT row_number() over (order by PAGO_IMPORTE), PAGO_FECHA,PAGO_IMPORTE,PAGO_NRO_TARJETA,PAGO_FECHA_VENC_TARJETA,PAGO_CANT_CUOTAS,med.medio_pago_id,med.tipo_medio_pago_id,venta.venta_codigo
+		FROM gd_esquema.Maestra m
+		JOIN GESTORES_DE_DATOS.Medio_pago med ON med.medio_pago = PAGO_MEDIO_PAGO
+		JOIN GESTORES_DE_DATOS.Venta venta ON venta.venta_codigo = m.VENTA_CODIGO
 
-Publicacion (depende de Producto, Vendedor, Almacen)
-Envio (depende de Venta, Domicilio, Tipo_Envio)
 
-Quinto nivel:
+/*Cuarto nivel:
 
-Venta_Detalle (depende de Venta, Publicacion)
-Item_factura (depende de Factura, Publicacion, Concepto)
-*/
+Publicacion (depende de Producto, Vendedor, Almacen)*/
+INSERT INTO GESTORES_DE_DATOS.Publicacion(publicacion_codigo,publicacion_descripcion,publicacion_stock,publicacion_fecha_inicio,
+	publicacion_fecha_fin,publicacion_precio,publicacion_costo,publicacion_porc_venta,producto_id,vendedor_id,almacen_codigo)
+	SELECT DISTINCT PUBLICACION_CODIGO,PUBLICACION_DESCRIPCION,PUBLICACION_STOCK,PUBLICACION_FECHA,PUBLICACION_FECHA_V,
+		PUBLICACION_PRECIO,PUBLICACION_COSTO,PUBLICACION_PORC_VENTA,p.producto_id,v.vendedor_id--,a.almacen_codigo
+		FROM gd_esquema.Maestra m
+		JOIN GESTORES_DE_DATOS.Producto p ON p.producto_codigo = m.PRODUCTO_CODIGO
+		JOIN GESTORES_DE_DATOS.Vendedor v ON v.vendedor_CUIT = m.VENDEDOR_CUIT AND v.vendedor_MAIL = m.VENDEDOR_MAIL 
+		JOIN GESTORES_DE_DATOS.Almacen a ON a.almacen_codigo = m.ALMACEN_CODIGO
 
-SELECT * FROM gd_esquema.Maestra
+
+/*Envio (depende de Venta, Domicilio, Tipo_Envio)*/
+
+INSERT INTO GESTORES_DE_DATOS.Envio(envio_id,envio_fecha_programada,envio_hora_inicio,envio_hora_fin,envio_fecha_entrega,envio_costo, 
+venta_codigo,domicilio_id,tipo_envio_id)
+	SELECT m.ENVIO_FECHA_PROGAMADA,m.ENVIO_HORA_INICIO,m.ENVIO_HORA_FIN_INICIO,m.ENVIO_FECHA_ENTREGA,m.ENVIO_COSTO,
+		v.venta_codigo,d.domicilio_id,t.tipo_envio_id
+		FROM gd_esquema.Maestra m
+		JOIN GESTORES_DE_DATOS.Venta v ON v.venta_codigo = m.VENTA_CODIGO
+		JOIN GESTORES_DE_DATOS.Domicilio d ON d.domicilio_calle = m.CLI_USUARIO_DOMICILIO_CALLE AND d.domicilio_cp = m.CLI_USUARIO_DOMICILIO_CP AND
+			d.domicilio_depto = m.CLI_USUARIO_DOMICILIO_DEPTO AND d.domicilio_nro_calle = m.CLI_USUARIO_DOMICILIO_NRO_CALLE
+		JOIN GESTORES_DE_DATOS.Tipo_Envio t ON t.tipo_envio = m.ENVIO_TIPO
+
+/*Quinto nivel:
+
+Venta_Detalle (depende de Venta, Publicacion) ESTA MAL LA NUMERACION DEL DETALLE*/
+INSERT INTO GESTORES_DE_DATOS.Venta_Detalle(venta_codigo,detalle_item,venta_det_cant,venta_det_precio,venta_det_sub_total,publicacion_codigo)
+	SELECT DISTINCT m.VENTA_CODIGO,COUNT(m.VENTA_CODIGO),m.VENTA_DET_CANT,m.VENTA_DET_PRECIO,m.VENTA_DET_SUB_TOTAL,m.PUBLICACION_CODIGO
+		FROM gd_esquema.Maestra m
+		WHERE VENTA_CODIGO IS NOT NULL
+		GROUP BY m.VENTA_CODIGO,m.VENTA_DET_CANT,m.VENTA_DET_PRECIO,m.VENTA_DET_SUB_TOTAL,m.PUBLICACION_CODIGO
+
+/*Item_factura (depende de Factura, Publicacion, Concepto) ESTA MAL LA NUMERACION DEL DETALLE*/
+
+INSERT INTO GESTORES_DE_DATOS.Item_factura(factura_numero,publicacion_codigo,concepto_id,item_precio,item_cantidad,item_subtotal)
+	SELECT m.FACTURA_NUMERO,m.PUBLICACION_CODIGO,c.concepto_id,m.FACTURA_DET_PRECIO,m.FACTURA_DET_CANTIDAD,m.FACTURA_DET_SUBTOTAL
+		FROM gd_esquema.Maestra m
+		JOIN GESTORES_DE_DATOS.Concepto c ON c.concepto = m.FACTURA_DET_TIPO
+
+--SELECT * FROM gd_esquema.Maestra

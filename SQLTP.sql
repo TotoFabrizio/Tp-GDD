@@ -168,7 +168,7 @@ CREATE TABLE GESTORES_DE_DATOS.Pago(
 	pago_fecha DATE,
 	pago_importe DECIMAL(18,2),
 	pago_nro_tarjeta NVARCHAR(50),
-	pago_fecha_vvenc_tarjets DATE,
+	pago_fecha_venc_tarjets DATE,
 	pago_cant_cuotas DECIMAL(18,0),
 	medio_pago_id DECIMAL(18,0),
 	tipo_medio_pago_id DECIMAL(18,0),

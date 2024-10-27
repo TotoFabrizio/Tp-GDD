@@ -133,17 +133,14 @@ INSERT INTO GESTORES_DE_DATOS.Vendedor(vendedor_id, vendedor_razon_social, vende
 
 -- Producto
 
-INSERT INTO GESTORES_DE_DATOS.Producto(producto_id, producto_codigo, producto_descripcion)
+INSERT INTO GESTORES_DE_DATOS.Producto(producto_codigo, producto_descripcion,producto_precio)
     SELECT DISTINCT
-        row_number() over (order by PRODUCTO_CODIGO),
         PRODUCTO_CODIGO,
-        PRODUCTO_DESCRIPCION
+        PRODUCTO_DESCRIPCION,
+		PRODUCTO_PRECIO
     FROM gd_esquema.Maestra
     WHERE
         PRODUCTO_CODIGO IS NOT NULL
-    GROUP BY
-        PRODUCTO_CODIGO,
-        PRODUCTO_DESCRIPCION
 
 /*
 Segundo nivel - Depende del primero
@@ -211,21 +208,23 @@ INSERT INTO GESTORES_DE_DATOS.Venta(venta_codigo,venta_fecha,venta_total,cliente
 
 /*Marca_Modelo_Producto (depende de Marca, Modelo, Producto) NO SE SI EL PRECIO ESTA DEL TODO BIEN, REVISAR ESTO, TIRA ERRPR DE PK DUPLICADA*/
 
-INSERT INTO GESTORES_DE_DATOS.Marca_Modelo_Producto(marca_id,modelo_id,producto_id,producto_precio)
-		SELECT DISTINCT ma.marca_id,mo.modelo_id,p.producto_id,m.PRODUCTO_PRECIO
+INSERT INTO GESTORES_DE_DATOS.Marca_Modelo_Producto(marca_id,modelo_id,producto_id)
+		SELECT DISTINCT ma.marca_id,mo.modelo_id,p.producto_id
 			FROM gd_esquema.Maestra m
-			JOIN GESTORES_DE_DATOS.Modelo mo ON mo.modelo_codigo = m.PRODUCTO_MOD_CODIGO
+			JOIN GESTORES_DE_DATOS.Modelo mo ON mo.modelo_codigo = m.PRODUCTO_MOD_CODIGO AND mo.modelo_descripcion = m.PRODUCTO_MOD_DESCRIPCION
 			JOIN GESTORES_DE_DATOS.Marca ma ON ma.marca = m.PRODUCTO_MARCA
 			JOIN GESTORES_DE_DATOS.Producto p ON p.producto_codigo = m.PRODUCTO_CODIGO AND p.producto_descripcion = m.PRODUCTO_DESCRIPCION
+				AND p.producto_precio = m.PRODUCTO_PRECIO
 
-/*Producto_SubRubro_Rubro (depende de Producto, Sub_rubro, Rubro)*/
+/*Producto_SubRubro_Rubro (depende de Producto, Sub_rubro, Rubro)*/ --25.924.001
 
 INSERT INTO GESTORES_DE_DATOS.Producto_SubRubro_Rubro(producto_id,sub_rubro_id,rubro_id)
 	SELECT DISTINCT p.producto_id,su.sub_rubro_id,ru.rubro_id
 		FROM gd_esquema.Maestra m
 		JOIN GESTORES_DE_DATOS.Rubro ru ON ru.rubro_descripcion = m.PRODUCTO_RUBRO_DESCRIPCION
 		JOIN GESTORES_DE_DATOS.Sub_rubro su ON su.sub_rubro = m.PRODUCTO_SUB_RUBRO
-		JOIN GESTORES_DE_DATOS.Producto p ON m.PRODUCTO_CODIGO = p.producto_codigo
+		JOIN GESTORES_DE_DATOS.Producto p ON p.producto_codigo = m.PRODUCTO_CODIGO AND p.producto_descripcion = m.PRODUCTO_DESCRIPCION
+			AND p.producto_precio = m.PRODUCTO_PRECIO
 		WHERE m.PRODUCTO_CODIGO IS NOT NULL
 
 /*Tercer nivel - Depende del segundo
@@ -274,13 +273,13 @@ INSERT INTO GESTORES_DE_DATOS.Pago(pago_id,pago_fecha,pago_importe,pago_nro_tarj
 
 /*Cuarto nivel:
 
-Publicacion (depende de Producto, Vendedor, Almacen)*/
+Publicacion (depende de Producto, Vendedor, Almacen) REVVISAR ESTo*/
 INSERT INTO GESTORES_DE_DATOS.Publicacion(publicacion_codigo,publicacion_descripcion,publicacion_stock,publicacion_fecha_inicio,
 	publicacion_fecha_fin,publicacion_precio,publicacion_costo,publicacion_porc_venta,producto_id,vendedor_id,almacen_codigo)
 	SELECT DISTINCT PUBLICACION_CODIGO,PUBLICACION_DESCRIPCION,PUBLICACION_STOCK,PUBLICACION_FECHA,PUBLICACION_FECHA_V,
 		PUBLICACION_PRECIO,PUBLICACION_COSTO,PUBLICACION_PORC_VENTA,p.producto_id,v.vendedor_id,a.almacen_codigo
 		FROM gd_esquema.Maestra m
-		JOIN GESTORES_DE_DATOS.Producto p ON p.producto_codigo = m.PRODUCTO_CODIGO
+		JOIN GESTORES_DE_DATOS.Producto p ON p.producto_codigo = m.PRODUCTO_CODIGO AND p.producto_descripcion = m.PRODUCTO_DESCRIPCION AND p.producto_precio = m.PRODUCTO_PRECIO
 		JOIN GESTORES_DE_DATOS.Vendedor v ON v.vendedor_CUIT = m.VENDEDOR_CUIT AND v.vendedor_MAIL = m.VENDEDOR_MAIL 
 		JOIN GESTORES_DE_DATOS.Almacen a ON a.almacen_codigo = m.ALMACEN_CODIGO
 
@@ -299,7 +298,7 @@ venta_codigo,domicilio_id,tipo_envio_id)
 
 /*Factura (depende de Usuario)*/
 INSERT INTO GESTORES_DE_DATOS.Factura(factura_numero,factura_fecha,factura_total,usuario_id)
-	SELECT FACTURA_NUMERO,FACTURA_FECHA,FACTURA_TOTAL,u.usuario_id
+	SELECT DISTINCT FACTURA_NUMERO,FACTURA_FECHA,FACTURA_TOTAL,u.usuario_id
 		FROM gd_esquema.Maestra m
 		JOIN GESTORES_DE_DATOS.Publicacion p ON m.PUBLICACION_CODIGO = p.publicacion_codigo
 		JOIN GESTORES_DE_DATOS.Vendedor v ON v.vendedor_id = p.vendedor_id
@@ -308,14 +307,14 @@ INSERT INTO GESTORES_DE_DATOS.Factura(factura_numero,factura_fecha,factura_total
 
 /*Quinto nivel:
 
-Venta_Detalle (depende de Venta, Publicacion) ESTA MAL LA NUMERACION DEL DETALLE*/
+Venta_Detalle (depende de Venta, Publicacion) ESTA MAL LA NUMERACION DEL DETALLE La parte del item RESOLVER CON TRIGGER*/
 INSERT INTO GESTORES_DE_DATOS.Venta_Detalle(venta_codigo,detalle_item,venta_det_cant,venta_det_precio,venta_det_sub_total,publicacion_codigo)
 	SELECT DISTINCT m.VENTA_CODIGO,COUNT(m.VENTA_CODIGO),m.VENTA_DET_CANT,m.VENTA_DET_PRECIO,m.VENTA_DET_SUB_TOTAL,m.PUBLICACION_CODIGO
 		FROM gd_esquema.Maestra m
 		WHERE VENTA_CODIGO IS NOT NULL
 		GROUP BY m.VENTA_CODIGO,m.VENTA_DET_CANT,m.VENTA_DET_PRECIO,m.VENTA_DET_SUB_TOTAL,m.PUBLICACION_CODIGO
 
-/*Item_factura (depende de Factura, Publicacion, Concepto) ESTA MAL LA NUMERACION DEL DETALLE*/
+/*Item_factura (depende de Factura, Publicacion, Concepto) ESTA MAL LA NUMERACION DEL DETALLE La parte del item RESOLVER CON TRIGGER*/
 
 INSERT INTO GESTORES_DE_DATOS.Item_factura(factura_numero,publicacion_codigo,concepto_id,item_precio,item_cantidad,item_subtotal)
 	SELECT m.FACTURA_NUMERO,m.PUBLICACION_CODIGO,c.concepto_id,m.FACTURA_DET_PRECIO,m.FACTURA_DET_CANTIDAD,m.FACTURA_DET_SUBTOTAL

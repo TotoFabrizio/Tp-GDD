@@ -4,6 +4,8 @@ GO
 CREATE SCHEMA GESTORES_DE_DATOS;
 GO
 
+/* Creacion de Tablas */
+
 CREATE TABLE GESTORES_DE_DATOS.Provincia (
 	provincia_id DECIMAL(18,0) IDENTITY(1,1),
 	provincia NVARCHAR(50),
@@ -200,9 +202,9 @@ PRINT '**** Tablas creadas correctamente ****';
 GO
 
 
----INICIO MIGRACION
+/* Inicio de la migración */
 
--- Tablas independientes - Sin FK (Primer nivel)
+-- Primer nivel - Tablas independientes (sin FK)
 CREATE PROCEDURE GESTORES_DE_DATOS.Migrar_Provincia
 	AS
 		BEGIN

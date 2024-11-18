@@ -49,8 +49,23 @@ DROP PROCEDURE GESTORES_DE_DATOS.Migrar_Sub_rubro;
 DROP PROCEDURE GESTORES_DE_DATOS.Migrar_Cliente;
 DROP PROCEDURE GESTORES_DE_DATOS.Migrar_Vendedor;
 DROP PROCEDURE GESTORES_DE_DATOS.Migrar_Producto;
-DROP PROCEDURE GESTORES_DE_DATOS.Migrar_Cliente;
 DROP PROCEDURE GESTORES_DE_DATOS.Migrar_Marca;
+
+DROP TABLE GESTORES_DE_DATOS.hecho_facturacion;
+DROP TABLE GESTORES_DE_DATOS.hecho_publicacion;
+DROP TABLE GESTORES_DE_DATOS.hecho_venta;
+DROP TABLE GESTORES_DE_DATOS.dimension_concepto;
+DROP TABLE GESTORES_DE_DATOS.dimension_rango_etario;
+DROP TABLE GESTORES_DE_DATOS.dimension_rango_horario;
+DROP TABLE GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion;
+DROP TABLE GESTORES_DE_DATOS.dimension_tiempo;
+DROP TABLE GESTORES_DE_DATOS.dimension_tipo_envio;
+DROP TABLE GESTORES_DE_DATOS.dimension_tipo_medio_pago;
+DROP TABLE GESTORES_DE_DATOS.dimension_ubicacion;
+
+DROP VIEW GESTORES_DE_DATOS.Promedio_de_tiempo_de_publicaciones;
+DROP VIEW GESTORES_DE_DATOS.Promedio_de_stock_inicial;
+
 
 DROP SCHEMA GESTORES_DE_DATOS
 

@@ -297,8 +297,8 @@ GO
 CREATE PROCEDURE GESTORES_DE_DATOS.Migrar_Cliente
 AS
 BEGIN
-INSERT INTO GESTORES_DE_DATOS.Cliente(cliente_nombre, cliente_apellido, cliente_fecha_nac, cliente_dni)
-    SELECT DISTINCT CLIENTE_NOMBRE,CLIENTE_APELLIDO,CLIENTE_FECHA_NAC,CLIENTE_DNI
+INSERT INTO GESTORES_DE_DATOS.Cliente(cliente_nombre, cliente_apellido, cliente_fecha_nac, cliente_dni,cliente_MAIL)
+    SELECT DISTINCT CLIENTE_NOMBRE,CLIENTE_APELLIDO,CLIENTE_FECHA_NAC,CLIENTE_DNI,CLIENTE_MAIL
 		FROM gd_esquema.Maestra
 		WHERE CLIENTE_DNI IS NOT NULL
 END
@@ -315,13 +315,15 @@ INSERT INTO GESTORES_DE_DATOS.Vendedor(vendedor_razon_social, vendedor_CUIT, ven
 END
 GO
 
--- Producto
+-- Producto 6893
 CREATE PROCEDURE GESTORES_DE_DATOS.Migrar_Producto
 AS
 BEGIN
-INSERT INTO GESTORES_DE_DATOS.Producto(producto_codigo, producto_descripcion,producto_precio)
-    SELECT DISTINCT PRODUCTO_CODIGO,PRODUCTO_DESCRIPCION,PRODUCTO_PRECIO
-		FROM gd_esquema.Maestra
+INSERT INTO GESTORES_DE_DATOS.Producto(producto_codigo, producto_descripcion,producto_precio,sub_rubro_id)
+    SELECT DISTINCT PRODUCTO_CODIGO,PRODUCTO_DESCRIPCION,PRODUCTO_PRECIO,sr.sub_rubro_id
+		FROM gd_esquema.Maestra m
+		JOIN GESTORES_DE_DATOS.Rubro r ON r.rubro_descripcion = m.PRODUCTO_RUBRO_DESCRIPCION
+		JOIN GESTORES_DE_DATOS.Sub_rubro sr ON sr.sub_rubro = m.PRODUCTO_SUB_RUBRO AND r.rubro_id = sr.rubro_id
 		WHERE PRODUCTO_CODIGO IS NOT NULL
 END
 GO

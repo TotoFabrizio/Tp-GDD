@@ -259,10 +259,129 @@ SELECT drsp.marca,dt.anio, AVG(hp.stock_inicial)
 
 
 --VIEW 3
---VIEW 4
+CREATE VIEW GESTORES_DE_DATOS.Venta_promedio_mensual
+(promedio,localida,provincia,mes,anio)
+AS
+SELECT AVG(hv.monto_total_venta),du.localidad,du.provincia,dt.mes,dt.anio
+	FROM GESTORES_DE_DATOS.hecho_venta hv
+	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_almacen
+	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv.id_tiempo
+	GROUP BY du.localidad,du.provincia,dt.mes,dt.anio
+
+--VIEW 4 OPTIMIZAR FUNCIONA PERO TARDA COMO 15 min
+CREATE VIEW GESTORES_DE_DATOS.Rendimiento_de_rubros
+(rubro,cuatrimestre,anio,localidad,rangoEtario)
+AS
+WITH RubroTop AS (
+    SELECT dru.rubro,du.localidad,dt.cuatrimestre,dt.anio,hv2.id_rango_etario,
+        SUM(hv2.monto_total_venta) AS total_venta,
+        ROW_NUMBER() OVER (
+            PARTITION BY du.localidad,hv2.id_rango_etario,dt.cuatrimestre,dt.anio
+            ORDER BY SUM(hv2.monto_total_venta) DESC
+        ) AS rn
+    FROM GESTORES_DE_DATOS.hecho_venta hv2
+	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv2.id_ubicacion_cliente
+	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv2.id_tiempo
+    JOIN GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion dru ON dru.id = hv2.id_rubro_subRubro_publicacion
+    WHERE hv2.cantidad_cuotas > 0
+    GROUP BY dru.rubro,du.localidad,dt.cuatrimestre,dt.anio,hv2.id_rango_etario
+)
+SELECT drsp.rubro,dt.cuatrimestre,dt.anio,du.localidad,dre.rango
+	FROM GESTORES_DE_DATOS.hecho_venta hv
+	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_cliente
+	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv.id_tiempo
+	JOIN GESTORES_DE_DATOS.dimension_rango_etario dre ON dre.id = hv.id_rango_etario
+	JOIN GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion drsp ON drsp.id = hv.id_rubro_subRubro_publicacion
+	WHERE drsp.rubro IN (
+      SELECT rubro
+      FROM RubroTop rt
+      WHERE rn <= 5 AND du.localidad = rt.localidad AND rt.cuatrimestre = dt.cuatrimestre AND
+		rt.anio = dt.anio AND rt.id_rango_etario = dre.id
+  )
+GROUP BY drsp.rubro,dt.cuatrimestre,dt.anio,du.localidad,dre.rango;
+
 --VIEW 5
+
+
 --VIEW 6
+CREATE VIEW GESTORES_DE_DATOS.Pago_en_cuotas
+(localidad,tipoMedioPago,mes,anio)
+AS
+WITH LocalidadesTop3 AS (
+    SELECT 
+        du2.localidad,
+        hv2.id_tiempo,
+        hv2.id_tipo_medio_pago,
+        SUM(hv2.monto_total_venta) AS total_venta,
+        ROW_NUMBER() OVER (
+            PARTITION BY hv2.id_tiempo, hv2.id_tipo_medio_pago
+            ORDER BY SUM(hv2.monto_total_venta) DESC
+        ) AS rn
+    FROM GESTORES_DE_DATOS.hecho_venta hv2
+    JOIN GESTORES_DE_DATOS.dimension_ubicacion du2 ON du2.id = hv2.id_ubicacion_cliente
+    WHERE hv2.cantidad_cuotas > 0
+    GROUP BY du2.localidad, hv2.id_tiempo, hv2.id_tipo_medio_pago
+)
+SELECT 
+    du.localidad,
+    dtmp.tipo_medio_pago,
+    dt.mes,
+    dt.anio
+FROM GESTORES_DE_DATOS.hecho_venta hv
+JOIN GESTORES_DE_DATOS.dimension_tipo_medio_pago dtmp ON dtmp.id = hv.id_tipo_medio_pago
+JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv.id_tiempo
+JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_cliente
+WHERE hv.cantidad_cuotas > 0
+  AND du.localidad IN (
+      SELECT localidad
+      FROM LocalidadesTop3
+      WHERE rn <= 3
+        AND id_tipo_medio_pago = hv.id_tipo_medio_pago
+        AND id_tiempo = hv.id_tiempo
+  )
+GROUP BY du.localidad, dtmp.tipo_medio_pago, dt.mes, dt.anio;
+
 --VIEW 7
+CREATE VIEW GESTORES_DE_DATOS.Porcentaje_de_cumplimiento_de_envios
+(porcentaje,provinciaAlmacen,mes,anio)
+AS
+SELECT (CAST(COUNT(CASE WHEN hv.cumplimiento_envio = 0 THEN NULL ELSE 1 END) AS decimal(18,4))/ COUNT(hv.cumplimiento_envio))*100
+	,du.provincia,dt.mes,dt.anio
+	FROM GESTORES_DE_DATOS.hecho_venta hv
+	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_almacen
+	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv.id_tiempo
+	GROUP BY du.provincia,dt.mes,dt.anio
+
 --VIEW 8
+CREATE VIEW GESTORES_DE_DATOS.Localidades_que_pagan_mayor_costo_envio
+(localidad)
+AS
+SELECT TOP 5 du.localidad
+	FROM GESTORES_DE_DATOS.hecho_venta hv
+	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_cliente
+	GROUP BY du.localidad
+	ORDER BY SUM(hv.monto_envio) DESC
+
 --VIEW 9
+CREATE VIEW GESTORES_DE_DATOS.Porcentaje_facturacion_por_concepto
+(porcentaje,concepto,mes,anio)
+AS
+SELECT (SUM(hf.monto)/aux.montoTotal)*100,dc.concepto,dt.mes,dt.anio
+	FROM GESTORES_DE_DATOS.hecho_facturacion hf
+	JOIN GESTORES_DE_DATOS.dimension_concepto dc ON dc.id = hf.id_concepto
+	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hf.id_tiempo
+	JOIN (SELECT SUM(hf.monto) montoTotal, dt.mes,dt.anio
+				FROM GESTORES_DE_DATOS.hecho_facturacion hf
+				JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hf.id_tiempo
+				GROUP BY dt.mes, dt.anio) aux ON aux.anio = dt.anio AND aux.mes = dt.mes
+	GROUP BY dc.concepto,dt.mes,dt.anio,aux.montoTotal
+
 --VIEW 10
+CREATE VIEW GESTORES_DE_DATOS.Facturacion_por_provincia
+(monto,provincia,cuatrimestre,anio)
+AS
+SELECT SUM(hf.monto),du.provincia,dt.cuatrimestre,dt.anio
+	FROM GESTORES_DE_DATOS.hecho_facturacion hf
+	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hf.id_ubicacion_vendedor
+	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hf.id_tiempo
+	GROUP BY du.provincia,dt.cuatrimestre,dt.anio

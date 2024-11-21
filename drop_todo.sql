@@ -51,6 +51,17 @@ DROP PROCEDURE GESTORES_DE_DATOS.Migrar_Vendedor;
 DROP PROCEDURE GESTORES_DE_DATOS.Migrar_Producto;
 DROP PROCEDURE GESTORES_DE_DATOS.Migrar_Marca;
 
+DROP VIEW GESTORES_DE_DATOS.Promedio_de_tiempo_de_publicaciones;--1
+DROP VIEW GESTORES_DE_DATOS.Promedio_de_stock_inicial;--2
+DROP VIEW GESTORES_DE_DATOS.Venta_promedio_mensual;--3
+DROP VIEW GESTORES_DE_DATOS.Rendimiento_de_rubros;--4
+
+DROP VIEW GESTORES_DE_DATOS.Pago_en_cuotas;--6
+DROP VIEW GESTORES_DE_DATOS.Porcentaje_de_cumplimiento_de_envios;--7
+DROP VIEW GESTORES_DE_DATOS.Porcentaje_facturacion_por_concepto;--8
+DROP VIEW GESTORES_DE_DATOS.Porcentaje_facturacion_por_concepto;--9
+DROP VIEW GESTORES_DE_DATOS.Facturacion_por_provincia;--10
+
 DROP TABLE GESTORES_DE_DATOS.hecho_facturacion;
 DROP TABLE GESTORES_DE_DATOS.hecho_publicacion;
 DROP TABLE GESTORES_DE_DATOS.hecho_venta;
@@ -62,10 +73,6 @@ DROP TABLE GESTORES_DE_DATOS.dimension_tiempo;
 DROP TABLE GESTORES_DE_DATOS.dimension_tipo_envio;
 DROP TABLE GESTORES_DE_DATOS.dimension_tipo_medio_pago;
 DROP TABLE GESTORES_DE_DATOS.dimension_ubicacion;
-
-DROP VIEW GESTORES_DE_DATOS.Promedio_de_tiempo_de_publicaciones;
-DROP VIEW GESTORES_DE_DATOS.Promedio_de_stock_inicial;
-
 
 DROP SCHEMA GESTORES_DE_DATOS
 

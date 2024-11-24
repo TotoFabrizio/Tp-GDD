@@ -8,6 +8,7 @@ CREATE TABLE GESTORES_DE_DATOS.dimension_tiempo(
 	cuatrimestre DECIMAL(1,0),
 	PRIMARY KEY (id)
 )
+GO
 
 CREATE TABLE GESTORES_DE_DATOS.dimension_ubicacion(
 	id DECIMAL(18,0) IDENTITY(1,1),
@@ -15,12 +16,14 @@ CREATE TABLE GESTORES_DE_DATOS.dimension_ubicacion(
 	provincia NVARCHAR(50),
 	PRIMARY KEY (id)
 )
+GO
 
 CREATE TABLE GESTORES_DE_DATOS.dimension_rango_etario(
 	id DECIMAL(18,0) IDENTITY(1,1),
 	rango NVARCHAR(50),
 	PRIMARY KEY(id)
 )
+GO
 
 CREATE TABLE GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion(
 	id DECIMAL(18,0) IDENTITY(1,1),
@@ -30,30 +33,35 @@ CREATE TABLE GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion(
 	marca NVARCHAR(50),
 	PRIMARY KEY(id)
 )
+GO
 
 CREATE TABLE GESTORES_DE_DATOS.dimension_concepto(
 	id DECIMAL(18,0) IDENTITY(1,1),
 	concepto NVARCHAR(50),
 	PRIMARY KEY (id)
 )
+GO
 
 CREATE TABLE GESTORES_DE_DATOS.dimension_rango_horario(
 	id DECIMAL(18,0) IDENTITY(1,1),
 	rango NVARCHAR(50),
 	PRIMARY KEY(id)
 )
+GO
 
 CREATE TABLE GESTORES_DE_DATOS.dimension_tipo_envio(
 	id DECIMAL(18,0) IDENTITY(1,1),
 	tipo_envio NVARCHAR(50),
 	PRIMARY KEY(id)
 )
+GO
 
 CREATE TABLE GESTORES_DE_DATOS.dimension_tipo_medio_pago(
 	id DECIMAL(18,0) IDENTITY(1,1),
 	tipo_medio_pago NVARCHAR(50),
 	PRIMARY KEY(id)
 )
+GO
 
 CREATE TABLE GESTORES_DE_DATOS.hecho_venta(
 	id DECIMAL(18,0) IDENTITY(1,1),
@@ -83,6 +91,7 @@ CREATE TABLE GESTORES_DE_DATOS.hecho_venta(
 	FOREIGN KEY (id_tipo_envio) REFERENCES GESTORES_DE_DATOS.dimension_tipo_envio(id),
 	FOREIGN KEY (id_ubicacion_vendedor) REFERENCES GESTORES_DE_DATOS.dimension_ubicacion(id)
 )
+GO
 
 CREATE TABLE GESTORES_DE_DATOS.hecho_facturacion(
 	id DECIMAL(18,0) IDENTITY(1,1),
@@ -95,6 +104,7 @@ CREATE TABLE GESTORES_DE_DATOS.hecho_facturacion(
 	FOREIGN KEY (id_concepto) REFERENCES GESTORES_DE_DATOS.dimension_concepto(id),
 	FOREIGN KEY (id_ubicacion_vendedor) REFERENCES GESTORES_DE_DATOS.dimension_ubicacion(id),
 )
+GO
 
 CREATE TABLE GESTORES_DE_DATOS.hecho_publicacion(
 	id DECIMAL(18,0) IDENTITY(1,1),
@@ -106,6 +116,7 @@ CREATE TABLE GESTORES_DE_DATOS.hecho_publicacion(
 	FOREIGN KEY (id_rubro_subRubro_publicacion) REFERENCES GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion(id),
 	FOREIGN KEY (id_tiempo) REFERENCES GESTORES_DE_DATOS.dimension_tiempo(id)
 )
+GO
 
 INSERT INTO GESTORES_DE_DATOS.dimension_tiempo(mes,cuatrimestre,anio)
 	SELECT distinct MONTH(venta_fecha) 'mes',(CASE 
@@ -114,11 +125,13 @@ INSERT INTO GESTORES_DE_DATOS.dimension_tiempo(mes,cuatrimestre,anio)
 									WHEN MONTH(venta_fecha) BETWEEN 9 AND 12 THEN 3  
 								END) 'cuatrimestre',YEAR(venta_fecha) 'anio' FROM GESTORES_DE_DATOS.Venta
 			ORDER BY 3,2,1
+GO
 
 INSERT INTO GESTORES_DE_DATOS.dimension_ubicacion(localidad,provincia)
 	SELECT l.localidad,p.provincia
 		FROM GESTORES_DE_DATOS.Localidad l 
 		JOIN GESTORES_DE_DATOS.Provincia p ON p.provincia_id = l.provincia_id
+GO
 
 INSERT INTO GESTORES_DE_DATOS.dimension_rango_etario(rango)
 	SELECT DISTINCT (CASE
@@ -127,7 +140,7 @@ INSERT INTO GESTORES_DE_DATOS.dimension_rango_etario(rango)
 						WHEN DATEDIFF(YEAR,c.cliente_fecha_nac,GETDATE()) BETWEEN 35 AND 49 THEN '35-50'
 						WHEN DATEDIFF(YEAR,c.cliente_fecha_nac,GETDATE()) > 50 THEN '>50'
 					END) FROM GESTORES_DE_DATOS.Cliente c
-
+GO
 
 	
 INSERT INTO GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion(rubro,subRubro,publicacion,marca)
@@ -138,9 +151,11 @@ INSERT INTO GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion(rubro,subRubr
 			JOIN GESTORES_DE_DATOS.Rubro r ON r.rubro_id = sr.rubro_id
 			JOIN GESTORES_DE_DATOS.Marca_Modelo_Producto mmp ON mmp.producto_id = p.producto_id
 			JOIN GESTORES_DE_DATOS.Marca m ON m.marca_id = mmp.marca_id
+GO
 
 INSERT INTO GESTORES_DE_DATOS.dimension_concepto(concepto)
 	SELECT c.concepto FROM GESTORES_DE_DATOS.Concepto c
+GO
 
 INSERT INTO GESTORES_DE_DATOS.dimension_rango_horario(rango)
 	SELECT DISTINCT (CASE 
@@ -151,12 +166,15 @@ INSERT INTO GESTORES_DE_DATOS.dimension_rango_horario(rango)
 			END) FROM (SELECT e.envio_hora_inicio hora  FROM GESTORES_DE_DATOS.Envio e
 					UNION
 					SELECT e.envio_hora_fin hora FROM GESTORES_DE_DATOS.Envio e) aux
+GO
 
 INSERT INTO GESTORES_DE_DATOS.dimension_tipo_envio(tipo_envio)
 	SELECT tipo_envio FROM GESTORES_DE_DATOS.Tipo_Envio
+GO
 
 INSERT INTO GESTORES_DE_DATOS.dimension_tipo_medio_pago(tipo_medio_pago)
 	SELECT tipo_medio_pago FROM GESTORES_DE_DATOS.Tipo_medio_pago
+GO
 
 INSERT INTO GESTORES_DE_DATOS.hecho_facturacion
 	(id_concepto,id_tiempo,id_ubicacion_vendedor,monto)
@@ -171,6 +189,7 @@ INSERT INTO GESTORES_DE_DATOS.hecho_facturacion
 		JOIN GESTORES_DE_DATOS.Provincia p ON p.provincia_id = d.provincia_id AND p.provincia_id = l.provincia_id
 		JOIN GESTORES_DE_DATOS.dimension_ubicacion ub ON ub.localidad = l.localidad AND ub.provincia = p.provincia
 	GROUP BY con.concepto_id,t.id,ub.id
+GO
 
 INSERT INTO GESTORES_DE_DATOS.hecho_publicacion(id_rubro_subRubro_publicacion,id_tiempo,tiempo_publicacion,stock_inicial)
 	SELECT rsp.id,t.id,DATEDIFF(DAY,pub.publicacion_fecha_inicio,pub.publicacion_fecha_fin), pub.publicacion_stock
@@ -181,6 +200,7 @@ INSERT INTO GESTORES_DE_DATOS.hecho_publicacion(id_rubro_subRubro_publicacion,id
 		JOIN GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion rsp 
 			ON rsp.publicacion = pub.publicacion_codigo AND rsp.subRubro = sr.sub_rubro AND rsp.rubro = r.rubro_descripcion
 		JOIN GESTORES_DE_DATOS.dimension_tiempo t ON t.mes = MONTH(pub.publicacion_fecha_inicio) AND t.anio = YEAR(pub.publicacion_fecha_inicio)
+GO
 
 --EL ID DEL RANGO HORARIO SE ENCUENTRA HARDCODEADO YA QUE NO HAY HORARIO, A MENOS Q ACEPTEN EL DEL ENVIO
 --101.324
@@ -236,6 +256,7 @@ INSERT INTO GESTORES_DE_DATOS.hecho_venta(id_tiempo,id_rubro_subRubro_publicacio
 			ON provVend.provincia_id = dVend.provincia_id AND provVend.provincia_id = lVend.provincia_id
 		JOIN GESTORES_DE_DATOS.dimension_ubicacion ubVend
 			ON ubVend.localidad = lVend.localidad AND ubVend.provincia = provVend.provincia;
+GO
 
 --VIEW 1
 CREATE VIEW GESTORES_DE_DATOS.Promedio_de_tiempo_de_publicaciones
@@ -246,6 +267,7 @@ SELECT drsp.subRubro, dt.cuatrimestre,dt.anio, AVG(hp.tiempo_publicacion)
 	JOIN GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion drsp ON drsp.id = hp.id_rubro_subRubro_publicacion
 	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hp.id_tiempo
 	GROUP BY drsp.subRubro, dt.cuatrimestre,dt.anio;
+GO
 
 --VIEW 2
 CREATE VIEW GESTORES_DE_DATOS.Promedio_de_stock_inicial
@@ -256,7 +278,7 @@ SELECT drsp.marca,dt.anio, AVG(hp.stock_inicial)
 	JOIN GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion drsp ON drsp.id = hp.id_rubro_subRubro_publicacion
 	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hp.id_tiempo
 	GROUP BY drsp.marca,dt.anio;
-
+GO
 
 --VIEW 3
 CREATE VIEW GESTORES_DE_DATOS.Venta_promedio_mensual
@@ -267,8 +289,9 @@ SELECT AVG(hv.monto_total_venta),du.localidad,du.provincia,dt.mes,dt.anio
 	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_almacen
 	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv.id_tiempo
 	GROUP BY du.localidad,du.provincia,dt.mes,dt.anio
+GO
 
---VIEW 4 OPTIMIZAR FUNCIONA PERO TARDA COMO 15 min
+--VIEW 4 
 CREATE VIEW GESTORES_DE_DATOS.Rendimiento_de_rubros
 (rubro,cuatrimestre,anio,localidad,rangoEtario)
 AS
@@ -299,11 +322,9 @@ SELECT drsp.rubro,dt.cuatrimestre,dt.anio,du.localidad,dre.rango
 		rt.anio = dt.anio AND rt.id_rango_etario = dre.id
   )
 GROUP BY drsp.rubro,dt.cuatrimestre,dt.anio,du.localidad,dre.rango;
+GO
 
 --VIEW 5
-
-
---VIEW 6
 CREATE VIEW GESTORES_DE_DATOS.Pago_en_cuotas
 (localidad,tipoMedioPago,mes,anio)
 AS
@@ -340,8 +361,9 @@ WHERE hv.cantidad_cuotas > 0
         AND id_tiempo = hv.id_tiempo
   )
 GROUP BY du.localidad, dtmp.tipo_medio_pago, dt.mes, dt.anio;
+GO
 
---VIEW 7
+--VIEW 6
 CREATE VIEW GESTORES_DE_DATOS.Porcentaje_de_cumplimiento_de_envios
 (porcentaje,provinciaAlmacen,mes,anio)
 AS
@@ -351,8 +373,9 @@ SELECT (CAST(COUNT(CASE WHEN hv.cumplimiento_envio = 0 THEN NULL ELSE 1 END) AS 
 	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_almacen
 	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv.id_tiempo
 	GROUP BY du.provincia,dt.mes,dt.anio
+GO
 
---VIEW 8
+--VIEW 7
 CREATE VIEW GESTORES_DE_DATOS.Localidades_que_pagan_mayor_costo_envio
 (localidad)
 AS
@@ -361,8 +384,9 @@ SELECT TOP 5 du.localidad
 	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_cliente
 	GROUP BY du.localidad
 	ORDER BY SUM(hv.monto_envio) DESC
+GO
 
---VIEW 9
+--VIEW 8
 CREATE VIEW GESTORES_DE_DATOS.Porcentaje_facturacion_por_concepto
 (porcentaje,concepto,mes,anio)
 AS
@@ -375,8 +399,9 @@ SELECT (SUM(hf.monto)/aux.montoTotal)*100,dc.concepto,dt.mes,dt.anio
 				JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hf.id_tiempo
 				GROUP BY dt.mes, dt.anio) aux ON aux.anio = dt.anio AND aux.mes = dt.mes
 	GROUP BY dc.concepto,dt.mes,dt.anio,aux.montoTotal
+GO
 
---VIEW 10
+--VIEW 9
 CREATE VIEW GESTORES_DE_DATOS.Facturacion_por_provincia
 (monto,provincia,cuatrimestre,anio)
 AS
@@ -385,3 +410,4 @@ SELECT SUM(hf.monto),du.provincia,dt.cuatrimestre,dt.anio
 	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hf.id_ubicacion_vendedor
 	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hf.id_tiempo
 	GROUP BY du.provincia,dt.cuatrimestre,dt.anio
+GO

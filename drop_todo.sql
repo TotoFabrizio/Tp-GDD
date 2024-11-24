@@ -58,7 +58,7 @@ DROP VIEW GESTORES_DE_DATOS.Rendimiento_de_rubros;--4
 
 DROP VIEW GESTORES_DE_DATOS.Pago_en_cuotas;--6
 DROP VIEW GESTORES_DE_DATOS.Porcentaje_de_cumplimiento_de_envios;--7
-DROP VIEW GESTORES_DE_DATOS.Porcentaje_facturacion_por_concepto;--8
+DROP VIEW GESTORES_DE_DATOS.Localidades_que_pagan_mayor_costo_envio;--8
 DROP VIEW GESTORES_DE_DATOS.Porcentaje_facturacion_por_concepto;--9
 DROP VIEW GESTORES_DE_DATOS.Facturacion_por_provincia;--10
 

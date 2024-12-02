@@ -71,15 +71,8 @@ CREATE TABLE GESTORES_DE_DATOS.hecho_venta(
 	id_rango_etario DECIMAL(18,0),
 	id_rango_horario DECIMAL(18,0),
 	id_ubicacion_cliente DECIMAL(18,0),
-	id_tipo_medio_pago DECIMAL(18,0),
-	id_tipo_envio DECIMAL(18,0),
 	id_ubicacion_vendedor DECIMAL(18,0),
 	monto_total_venta DECIMAL(12,2),
-	cantidad_cuotas DECIMAL(6,0),
-	monto_envio DECIMAL(12,2),
-	precio_producto DECIMAL(12,2),
-	cantidad_producto DECIMAL(6,0),
-	cumplimiento_envio DECIMAL(1,0),
 	PRIMARY KEY (id),
 	FOREIGN KEY (id_tiempo) REFERENCES GESTORES_DE_DATOS.dimension_tiempo(id),
 	FOREIGN KEY (id_rubro_subRubro_publicacion) REFERENCES GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion(id),
@@ -87,8 +80,6 @@ CREATE TABLE GESTORES_DE_DATOS.hecho_venta(
 	FOREIGN KEY (id_rango_etario) REFERENCES GESTORES_DE_DATOS.dimension_rango_etario(id),
 	FOREIGN KEY (id_rango_horario) REFERENCES GESTORES_DE_DATOS.dimension_rango_horario(id),
 	FOREIGN KEY (id_ubicacion_cliente) REFERENCES GESTORES_DE_DATOS.dimension_ubicacion(id),
-	FOREIGN KEY (id_tipo_medio_pago) REFERENCES GESTORES_DE_DATOS.dimension_tipo_medio_pago(id),
-	FOREIGN KEY (id_tipo_envio) REFERENCES GESTORES_DE_DATOS.dimension_tipo_envio(id),
 	FOREIGN KEY (id_ubicacion_vendedor) REFERENCES GESTORES_DE_DATOS.dimension_ubicacion(id)
 )
 GO
@@ -115,6 +106,38 @@ CREATE TABLE GESTORES_DE_DATOS.hecho_publicacion(
 	PRIMARY KEY (id),
 	FOREIGN KEY (id_rubro_subRubro_publicacion) REFERENCES GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion(id),
 	FOREIGN KEY (id_tiempo) REFERENCES GESTORES_DE_DATOS.dimension_tiempo(id)
+)
+GO
+
+CREATE TABLE GESTORES_DE_DATOS.hecho_pago (
+    id DECIMAL(18,0) IDENTITY(1,1),
+    id_tiempo DECIMAL(18,0),
+    id_tipo_medio_pago DECIMAL(18,0),
+    id_ubicacion_cliente DECIMAL(18,0),
+    monto_en_cuotas DECIMAL(6,0),
+    monto_pago DECIMAL(12,2),
+    PRIMARY KEY (id),
+    FOREIGN KEY (id_tiempo) REFERENCES GESTORES_DE_DATOS.dimension_tiempo(id),
+    FOREIGN KEY (id_tipo_medio_pago) REFERENCES GESTORES_DE_DATOS.dimension_tipo_medio_pago(id),
+    FOREIGN KEY (id_ubicacion_cliente) REFERENCES GESTORES_DE_DATOS.dimension_ubicacion(id)
+)
+GO
+
+
+CREATE TABLE GESTORES_DE_DATOS.hecho_envio(
+	id DECIMAL(18,0) IDENTITY(1,1),
+	id_tiempo DECIMAL(18,0),
+	id_tipo_envio DECIMAL(18,0),
+	id_ubicacion_almacen DECIMAL(18,0),
+	id_ubicacion_cliente DECIMAL(18,0),
+	monto_envio DECIMAL(12,2),
+	cant_envios_cumplidos DECIMAL(18,0),
+	cant_envios_totales DECIMAL(18,0),
+	PRIMARY KEY (id),
+    FOREIGN KEY (id_tiempo) REFERENCES GESTORES_DE_DATOS.dimension_tiempo(id),
+	FOREIGN KEY (id_tipo_envio) REFERENCES GESTORES_DE_DATOS.dimension_tipo_envio(id),
+	FOREIGN KEY (id_ubicacion_almacen) REFERENCES GESTORES_DE_DATOS.dimension_ubicacion(id),
+	FOREIGN KEY (id_ubicacion_cliente) REFERENCES GESTORES_DE_DATOS.dimension_ubicacion(id)
 )
 GO
 
@@ -205,16 +228,10 @@ GO
 --EL ID DEL RANGO HORARIO SE ENCUENTRA HARDCODEADO YA QUE NO HAY HORARIO, A MENOS Q ACEPTEN EL DEL ENVIO
 --101.324
 INSERT INTO GESTORES_DE_DATOS.hecho_venta(id_tiempo,id_rubro_subRubro_publicacion,id_ubicacion_almacen,
-	id_rango_etario,id_rango_horario,id_ubicacion_cliente,id_tipo_medio_pago,id_tipo_envio,id_ubicacion_vendedor,
-	monto_total_venta,cantidad_cuotas,monto_envio,precio_producto,cantidad_producto,cumplimiento_envio)
+	id_rango_etario,id_rango_horario,id_ubicacion_cliente,id_ubicacion_vendedor,
+	monto_total_venta)
 	SELECT dt.id 'tiempo',rsp.id 'rubro sub pub',ub.id 'ubicacion alacen',re.id 'rango etario',
-		1 'rango horario',ubCli.id 'ubicacion cliente',dtmp.id 'tipo medio pago',dte.id 'tipo envio',
-		ubVend.id 'ubicacion venderor', v.venta_total,pago.pago_cant_cuotas,e.envio_costo,vd.venta_det_precio,
-		vd.venta_det_cant,
-		(CASE
-			WHEN DATEPART(HOUR,e.envio_fecha_entrega) BETWEEN e.envio_hora_inicio AND e.envio_hora_fin THEN 1
-			WHEN DATEPART(HOUR,e.envio_fecha_entrega) NOT BETWEEN e.envio_hora_inicio AND e.envio_hora_fin THEN 0
-		END) 'cumplimiento envio'
+		1 'rango horario',ubCli.id 'ubicacion cliente',ubVend.id 'ubicacion venderor', sum(v.venta_total)
 		FROM GESTORES_DE_DATOS.Venta v
 		JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.mes = MONTH(v.venta_fecha) AND dt.anio = YEAR(v.venta_fecha)
 		JOIN GESTORES_DE_DATOS.Venta_Detalle vd ON vd.venta_codigo = v.venta_codigo
@@ -244,18 +261,61 @@ INSERT INTO GESTORES_DE_DATOS.hecho_venta(id_tiempo,id_rubro_subRubro_publicacio
 		JOIN GESTORES_DE_DATOS.dimension_ubicacion ubCli 
 			ON ubCli.localidad = lCli.localidad AND ubCli.provincia = provCli.provincia
 		JOIN GESTORES_DE_DATOS.Pago pago ON pago.venta_codigo = v.venta_codigo
-		JOIN GESTORES_DE_DATOS.Tipo_medio_pago tmp ON tmp.tipo_medio_pago_id = pago.tipo_medio_pago_id
-		JOIN GESTORES_DE_DATOS.dimension_tipo_medio_pago dtmp ON dtmp.tipo_medio_pago = tmp.tipo_medio_pago
-		JOIN GESTORES_DE_DATOS.Envio e ON e.venta_codigo = v.venta_codigo
-		JOIN GESTORES_DE_DATOS.Tipo_Envio te ON te.tipo_envio_id = e.tipo_envio_id
-		JOIN GESTORES_DE_DATOS.dimension_tipo_envio dte ON dte.tipo_envio = te.tipo_envio
 		JOIN GESTORES_DE_DATOS.Usuario uVende ON uVende.vendedor_id = pub.vendedor_id
 		JOIN GESTORES_DE_DATOS.Domicilio dVend ON dVend.usuario_id = uVende.usuario_id
 		JOIN GESTORES_DE_DATOS.Localidad lVend ON lVend.localidad_id = dVend.localidad_id
 		JOIN GESTORES_DE_DATOS.Provincia provVend
 			ON provVend.provincia_id = dVend.provincia_id AND provVend.provincia_id = lVend.provincia_id
 		JOIN GESTORES_DE_DATOS.dimension_ubicacion ubVend
-			ON ubVend.localidad = lVend.localidad AND ubVend.provincia = provVend.provincia;
+			ON ubVend.localidad = lVend.localidad AND ubVend.provincia = provVend.provincia
+		GROUP BY dt.id,rsp.id,ub.id,re.id,ubCli.id,ubVend.id;
+GO
+
+INSERT INTO GESTORES_DE_DATOS.hecho_pago(id_tiempo,id_tipo_medio_pago,id_ubicacion_cliente,monto_en_cuotas,monto_pago)
+	SELECT dt.id, dtmp.tipo_medio_pago_id, du.id, SUM((CASE
+			WHEN p.pago_cant_cuotas > 1 THEN p.pago_importe
+			WHEN p.pago_cant_cuotas <= 1 THEN 0
+		END)), SUM(p.pago_importe)
+		FROM GESTORES_DE_DATOS.Pago p
+		JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.mes = MONTH(p.pago_fecha) AND dt.anio = YEAR(p.pago_fecha)
+		JOIN GESTORES_DE_DATOS.Tipo_medio_pago tmp ON tmp.tipo_medio_pago_id = p.tipo_medio_pago_id
+		JOIN GESTORES_DE_DATOS.Tipo_medio_pago dtmp ON dtmp.tipo_medio_pago = tmp.tipo_medio_pago
+		JOIN GESTORES_DE_DATOS.Venta v ON v.venta_codigo = p.venta_codigo
+		JOIN GESTORES_DE_DATOS.Cliente c ON v.cliente_id = c.cliente_id
+		JOIN GESTORES_DE_DATOS.Usuario u ON u.cliente_id = c.cliente_id
+		JOIN GESTORES_DE_DATOS.Domicilio dom ON dom.usuario_id = u.usuario_id
+		JOIN GESTORES_DE_DATOS.Provincia prov ON prov.provincia_id = dom.provincia_id
+		JOIN GESTORES_DE_DATOS.Localidad l ON l.provincia_id = dom.provincia_id AND l.localidad_id = dom.localidad_id
+		JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.localidad = l.localidad AND du.provincia = prov.provincia
+		GROUP BY dt.id,dtmp.tipo_medio_pago_id,du.id;
+GO
+
+INSERT INTO GESTORES_DE_DATOS.hecho_envio(id_tiempo,id_ubicacion_almacen,id_ubicacion_cliente,
+	id_tipo_envio,cant_envios_cumplidos,cant_envios_totales,monto_envio)
+	SELECT dt.id 'tiempo',dua.id 'almacen',duc.id 'cliente',dte.id 'tipoEnvio',
+		COUNT((CASE
+			WHEN DATEPART(HOUR,e.envio_fecha_entrega) BETWEEN e.envio_hora_inicio AND e.envio_hora_fin THEN 1
+			WHEN DATEPART(HOUR,e.envio_fecha_entrega) NOT BETWEEN e.envio_hora_inicio AND e.envio_hora_fin THEN NULL
+		END)),COUNT(*) 'Total Envios',SUM(e.envio_costo) 'monto Total'
+		FROM GESTORES_DE_DATOS.Envio e
+		JOIN GESTORES_DE_DATOS.dimension_tiempo dt 
+			ON dt.mes = MONTH(e.envio_fecha_programada) AND dt.anio = YEAR(e.envio_fecha_programada)
+		JOIN GESTORES_DE_DATOS.Venta v ON v.venta_codigo = e.venta_codigo
+		JOIN GESTORES_DE_DATOS.Venta_Detalle vd ON vd.venta_codigo = v.venta_codigo
+		JOIN GESTORES_DE_DATOS.Publicacion pub ON pub.publicacion_codigo = vd.publicacion_codigo
+		JOIN GESTORES_DE_DATOS.Almacen a ON a.almacen_codigo = pub.almacen_codigo
+		JOIN GESTORES_DE_DATOS.Provincia pa ON pa.provincia_id = a.provincia_id
+		JOIN GESTORES_DE_DATOS.Localidad la ON la.localidad_id = a.localidad_id AND la.provincia_id = a.provincia_id
+		JOIN GESTORES_DE_DATOS.dimension_ubicacion dua ON dua.localidad = la.localidad AND dua.provincia = pa.provincia
+		JOIN GESTORES_DE_DATOS.Cliente c ON v.cliente_id = c.cliente_id
+		JOIN GESTORES_DE_DATOS.Usuario u ON u.cliente_id = c.cliente_id
+		JOIN GESTORES_DE_DATOS.Domicilio dom ON dom.usuario_id = u.usuario_id
+		JOIN GESTORES_DE_DATOS.Provincia prov ON prov.provincia_id = dom.provincia_id
+		JOIN GESTORES_DE_DATOS.Localidad l ON l.provincia_id = dom.provincia_id AND l.localidad_id = dom.localidad_id
+		JOIN GESTORES_DE_DATOS.dimension_ubicacion duc ON duc.localidad = l.localidad AND duc.provincia = prov.provincia
+		JOIN GESTORES_DE_DATOS.Tipo_Envio te ON te.tipo_envio_id = e.tipo_envio_id
+		JOIN GESTORES_DE_DATOS.dimension_tipo_envio dte ON dte.tipo_envio = te.tipo_envio
+		GROUP BY dt.id,dua.id,duc.id,dte.id;
 GO
 
 --VIEW 1
@@ -288,7 +348,7 @@ SELECT AVG(hv.monto_total_venta),du.localidad,du.provincia,dt.mes,dt.anio
 	FROM GESTORES_DE_DATOS.hecho_venta hv
 	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_almacen
 	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv.id_tiempo
-	GROUP BY du.localidad,du.provincia,dt.mes,dt.anio
+	GROUP BY du.localidad,du.provincia,dt.mes,dt.anio;
 GO
 
 --VIEW 4 
@@ -306,7 +366,6 @@ WITH RubroTop AS (
 	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv2.id_ubicacion_cliente
 	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv2.id_tiempo
     JOIN GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion dru ON dru.id = hv2.id_rubro_subRubro_publicacion
-    WHERE hv2.cantidad_cuotas > 0
     GROUP BY dru.rubro,du.localidad,dt.cuatrimestre,dt.anio,hv2.id_rango_etario
 )
 SELECT drsp.rubro,dt.cuatrimestre,dt.anio,du.localidad,dre.rango
@@ -324,69 +383,67 @@ SELECT drsp.rubro,dt.cuatrimestre,dt.anio,du.localidad,dre.rango
 GROUP BY drsp.rubro,dt.cuatrimestre,dt.anio,du.localidad,dre.rango;
 GO
 
---VIEW 5
+--VIEW 6
 CREATE VIEW GESTORES_DE_DATOS.Pago_en_cuotas
 (localidad,tipoMedioPago,mes,anio)
 AS
 WITH LocalidadesTop3 AS (
     SELECT 
         du2.localidad,
-        hv2.id_tiempo,
-        hv2.id_tipo_medio_pago,
-        SUM(hv2.monto_total_venta) AS total_venta,
+        hp2.id_tiempo,
+        hp2.id_tipo_medio_pago,
+        SUM(hp2.monto_en_cuotas) AS total_venta,
         ROW_NUMBER() OVER (
-            PARTITION BY hv2.id_tiempo, hv2.id_tipo_medio_pago
-            ORDER BY SUM(hv2.monto_total_venta) DESC
+            PARTITION BY hp2.id_tiempo, hp2.id_tipo_medio_pago
+            ORDER BY SUM(hp2.monto_en_cuotas) DESC
         ) AS rn
-    FROM GESTORES_DE_DATOS.hecho_venta hv2
-    JOIN GESTORES_DE_DATOS.dimension_ubicacion du2 ON du2.id = hv2.id_ubicacion_cliente
-    WHERE hv2.cantidad_cuotas > 0
-    GROUP BY du2.localidad, hv2.id_tiempo, hv2.id_tipo_medio_pago
+    FROM GESTORES_DE_DATOS.hecho_pago hp2
+    JOIN GESTORES_DE_DATOS.dimension_ubicacion du2 ON du2.id = hp2.id_ubicacion_cliente
+    GROUP BY du2.localidad, hp2.id_tiempo, hp2.id_tipo_medio_pago
 )
 SELECT 
     du.localidad,
     dtmp.tipo_medio_pago,
     dt.mes,
     dt.anio
-FROM GESTORES_DE_DATOS.hecho_venta hv
-JOIN GESTORES_DE_DATOS.dimension_tipo_medio_pago dtmp ON dtmp.id = hv.id_tipo_medio_pago
-JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv.id_tiempo
-JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_cliente
-WHERE hv.cantidad_cuotas > 0
-  AND du.localidad IN (
+FROM GESTORES_DE_DATOS.hecho_pago hp
+JOIN GESTORES_DE_DATOS.dimension_tipo_medio_pago dtmp ON dtmp.id = hp.id_tipo_medio_pago
+JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hp.id_tiempo
+JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hp.id_ubicacion_cliente
+WHERE du.localidad IN (
       SELECT localidad
       FROM LocalidadesTop3
       WHERE rn <= 3
-        AND id_tipo_medio_pago = hv.id_tipo_medio_pago
-        AND id_tiempo = hv.id_tiempo
+        AND id_tipo_medio_pago = hp.id_tipo_medio_pago
+        AND id_tiempo = hp.id_tiempo
   )
 GROUP BY du.localidad, dtmp.tipo_medio_pago, dt.mes, dt.anio;
 GO
 
---VIEW 6
+--VIEW 7
 CREATE VIEW GESTORES_DE_DATOS.Porcentaje_de_cumplimiento_de_envios
 (porcentaje,provinciaAlmacen,mes,anio)
 AS
-SELECT (CAST(COUNT(CASE WHEN hv.cumplimiento_envio = 0 THEN NULL ELSE 1 END) AS decimal(18,4))/ COUNT(hv.cumplimiento_envio))*100
+SELECT (CAST(sum(he.cant_envios_cumplidos) AS decimal(18,4))/ COUNT(he.cant_envios_totales))*100
 	,du.provincia,dt.mes,dt.anio
-	FROM GESTORES_DE_DATOS.hecho_venta hv
-	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_almacen
-	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = hv.id_tiempo
-	GROUP BY du.provincia,dt.mes,dt.anio
+	FROM GESTORES_DE_DATOS.hecho_envio he
+	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = he.id_ubicacion_almacen
+	JOIN GESTORES_DE_DATOS.dimension_tiempo dt ON dt.id = he.id_tiempo
+	GROUP BY du.provincia,dt.mes,dt.anio;
 GO
 
---VIEW 7
+--VIEW 8
 CREATE VIEW GESTORES_DE_DATOS.Localidades_que_pagan_mayor_costo_envio
 (localidad)
 AS
 SELECT TOP 5 du.localidad
-	FROM GESTORES_DE_DATOS.hecho_venta hv
-	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = hv.id_ubicacion_cliente
+	FROM GESTORES_DE_DATOS.hecho_envio he
+	JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.id = he.id_ubicacion_cliente
 	GROUP BY du.localidad
-	ORDER BY SUM(hv.monto_envio) DESC
+	ORDER BY sum(he.monto_envio) DESC
 GO
 
---VIEW 8
+--VIEW 9
 CREATE VIEW GESTORES_DE_DATOS.Porcentaje_facturacion_por_concepto
 (porcentaje,concepto,mes,anio)
 AS
@@ -401,7 +458,7 @@ SELECT (SUM(hf.monto)/aux.montoTotal)*100,dc.concepto,dt.mes,dt.anio
 	GROUP BY dc.concepto,dt.mes,dt.anio,aux.montoTotal
 GO
 
---VIEW 9
+--VIEW 10
 CREATE VIEW GESTORES_DE_DATOS.Facturacion_por_provincia
 (monto,provincia,cuatrimestre,anio)
 AS

@@ -65,6 +65,8 @@ DROP VIEW GESTORES_DE_DATOS.Facturacion_por_provincia;--10
 DROP TABLE GESTORES_DE_DATOS.hecho_facturacion;
 DROP TABLE GESTORES_DE_DATOS.hecho_publicacion;
 DROP TABLE GESTORES_DE_DATOS.hecho_venta;
+DROP TABLE GESTORES_DE_DATOS.hecho_pago;
+DROP TABLE GESTORES_DE_DATOS.hecho_envio;
 DROP TABLE GESTORES_DE_DATOS.dimension_concepto;
 DROP TABLE GESTORES_DE_DATOS.dimension_rango_etario;
 DROP TABLE GESTORES_DE_DATOS.dimension_rango_horario;

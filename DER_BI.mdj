@@ -680,22 +680,6 @@
 										},
 										{
 											"_type": "ERDColumnView",
-											"_id": "AAAAAAGTA8FRYlo6H1Q=",
-											"_parent": {
-												"$ref": "AAAAAAGTA8CC8loZaEc="
-											},
-											"model": {
-												"$ref": "AAAAAAGTA8FRX1o3tPQ="
-											},
-											"font": "Arial;13;0",
-											"parentStyle": true,
-											"left": 245,
-											"top": 641,
-											"width": 262.1962890625,
-											"height": 13
-										},
-										{
-											"_type": "ERDColumnView",
 											"_id": "AAAAAAGTO3eFXKYlckI=",
 											"_parent": {
 												"$ref": "AAAAAAGTA8CC8loZaEc="
@@ -706,7 +690,7 @@
 											"font": "Arial;13;0",
 											"parentStyle": true,
 											"left": 245,
-											"top": 656,
+											"top": 641,
 											"width": 262.1962890625,
 											"height": 13
 										}
@@ -716,7 +700,7 @@
 									"left": 240,
 									"top": 591,
 									"width": 272.1962890625,
-									"height": 83
+									"height": 68
 								}
 							],
 							"font": "Arial;13;0",
@@ -724,7 +708,7 @@
 							"left": 240,
 							"top": 568,
 							"width": 272.1962890625,
-							"height": 106,
+							"height": 91,
 							"nameLabel": {
 								"$ref": "AAAAAAGTA8CC8loYMFs="
 							},
@@ -1668,7 +1652,7 @@
 									"visible": false,
 									"font": "Arial;13;0",
 									"parentStyle": false,
-									"left": 644,
+									"left": 512,
 									"top": 643,
 									"height": 13,
 									"alpha": 1.5707963267948966,
@@ -1686,8 +1670,8 @@
 									},
 									"font": "Arial;13;0",
 									"parentStyle": false,
-									"left": 537,
-									"top": 643,
+									"left": 527,
+									"top": 678,
 									"height": 13,
 									"alpha": 0.5235987755982988,
 									"distance": 30,
@@ -1724,7 +1708,7 @@
 								"$ref": "AAAAAAGTA8CC8loXCxU="
 							},
 							"lineStyle": 2,
-							"points": "512:664;776:664",
+							"points": "512:659;512:664;776:664",
 							"nameLabel": {
 								"$ref": "AAAAAAGTO493GKhSS+I="
 							},
@@ -3601,16 +3585,6 @@
 								"$ref": "AAAAAAGTA8CC8loVl/o="
 							},
 							"name": "subRubro",
-							"type": "nvarchar",
-							"length": "50"
-						},
-						{
-							"_type": "ERDColumn",
-							"_id": "AAAAAAGTA8FRX1o3tPQ=",
-							"_parent": {
-								"$ref": "AAAAAAGTA8CC8loVl/o="
-							},
-							"name": "publicacion",
 							"type": "nvarchar",
 							"length": "50"
 						},

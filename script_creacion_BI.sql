@@ -29,7 +29,6 @@ CREATE TABLE GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion(
 	id DECIMAL(18,0) IDENTITY(1,1),
 	rubro NVARCHAR(50),
 	subRubro NVARCHAR(50),
-	publicacion NVARCHAR(50),
 	marca NVARCHAR(50),
 	PRIMARY KEY(id)
 )
@@ -140,7 +139,7 @@ CREATE TABLE GESTORES_DE_DATOS.hecho_envio(
 	FOREIGN KEY (id_ubicacion_cliente) REFERENCES GESTORES_DE_DATOS.dimension_ubicacion(id)
 )
 GO
-
+--24
 INSERT INTO GESTORES_DE_DATOS.dimension_tiempo(mes,cuatrimestre,anio)
 	SELECT distinct MONTH(venta_fecha) 'mes',(CASE 
 									WHEN MONTH(venta_fecha) BETWEEN 1 AND 4 THEN 1
@@ -149,13 +148,13 @@ INSERT INTO GESTORES_DE_DATOS.dimension_tiempo(mes,cuatrimestre,anio)
 								END) 'cuatrimestre',YEAR(venta_fecha) 'anio' FROM GESTORES_DE_DATOS.Venta
 			ORDER BY 3,2,1
 GO
-
+---16918
 INSERT INTO GESTORES_DE_DATOS.dimension_ubicacion(localidad,provincia)
 	SELECT l.localidad,p.provincia
 		FROM GESTORES_DE_DATOS.Localidad l 
 		JOIN GESTORES_DE_DATOS.Provincia p ON p.provincia_id = l.provincia_id
 GO
-
+--4
 INSERT INTO GESTORES_DE_DATOS.dimension_rango_etario(rango)
 	SELECT DISTINCT (CASE
 						WHEN DATEDIFF(YEAR,c.cliente_fecha_nac,GETDATE()) < 25 THEN '<25'
@@ -165,21 +164,20 @@ INSERT INTO GESTORES_DE_DATOS.dimension_rango_etario(rango)
 					END) FROM GESTORES_DE_DATOS.Cliente c
 GO
 
-	
-INSERT INTO GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion(rubro,subRubro,publicacion,marca)
-	SELECT DISTINCT r.rubro_descripcion,sr.sub_rubro,p.publicacion_codigo,m.marca
-		FROM GESTORES_DE_DATOS.Publicacion p
-			JOIN GESTORES_DE_DATOS.Producto pr ON pr.producto_id = p.producto_id
+--34629
+INSERT INTO GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion(rubro,subRubro,marca)
+	SELECT DISTINCT r.rubro_descripcion,sr.sub_rubro,m.marca
+		FROM GESTORES_DE_DATOS.Producto pr
 			JOIN GESTORES_DE_DATOS.Sub_rubro sr ON sr.sub_rubro_id = pr.sub_rubro_id
 			JOIN GESTORES_DE_DATOS.Rubro r ON r.rubro_id = sr.rubro_id
-			JOIN GESTORES_DE_DATOS.Marca_Modelo_Producto mmp ON mmp.producto_id = p.producto_id
+			JOIN GESTORES_DE_DATOS.Marca_Modelo_Producto mmp ON mmp.producto_id = pr.producto_id
 			JOIN GESTORES_DE_DATOS.Marca m ON m.marca_id = mmp.marca_id
 GO
-
+--3
 INSERT INTO GESTORES_DE_DATOS.dimension_concepto(concepto)
 	SELECT c.concepto FROM GESTORES_DE_DATOS.Concepto c
 GO
-
+--3
 INSERT INTO GESTORES_DE_DATOS.dimension_rango_horario(rango)
 	SELECT DISTINCT (CASE 
 				WHEN hora BETWEEN 0 and 5 THEN '00:00-06:00'
@@ -190,15 +188,15 @@ INSERT INTO GESTORES_DE_DATOS.dimension_rango_horario(rango)
 					UNION
 					SELECT e.envio_hora_fin hora FROM GESTORES_DE_DATOS.Envio e) aux
 GO
-
+--3
 INSERT INTO GESTORES_DE_DATOS.dimension_tipo_envio(tipo_envio)
 	SELECT tipo_envio FROM GESTORES_DE_DATOS.Tipo_Envio
 GO
-
+--2
 INSERT INTO GESTORES_DE_DATOS.dimension_tipo_medio_pago(tipo_medio_pago)
 	SELECT tipo_medio_pago FROM GESTORES_DE_DATOS.Tipo_medio_pago
 GO
-
+--4539
 INSERT INTO GESTORES_DE_DATOS.hecho_facturacion
 	(id_concepto,id_tiempo,id_ubicacion_vendedor,monto)
 	SELECT con.concepto_id,t.id 'tiempo ID',ub.id 'ubicacion vendedor', sum(i.item_cantidad*i.item_precio) FROM GESTORES_DE_DATOS.Factura f
@@ -213,20 +211,22 @@ INSERT INTO GESTORES_DE_DATOS.hecho_facturacion
 		JOIN GESTORES_DE_DATOS.dimension_ubicacion ub ON ub.localidad = l.localidad AND ub.provincia = p.provincia
 	GROUP BY con.concepto_id,t.id,ub.id
 GO
-
+--23017
 INSERT INTO GESTORES_DE_DATOS.hecho_publicacion(id_rubro_subRubro_publicacion,id_tiempo,tiempo_publicacion,stock_inicial)
-	SELECT rsp.id,t.id,DATEDIFF(DAY,pub.publicacion_fecha_inicio,pub.publicacion_fecha_fin), pub.publicacion_stock
+	SELECT rsp.id,t.id,AVG(DATEDIFF(DAY,pub.publicacion_fecha_inicio,pub.publicacion_fecha_fin)), SUM(pub.publicacion_stock)
 		FROM GESTORES_DE_DATOS.Publicacion pub
 		JOIN GESTORES_DE_DATOS.Producto p ON p.producto_id = pub.producto_id
 		JOIN GESTORES_DE_DATOS.Sub_rubro sr ON sr.sub_rubro_id = p.sub_rubro_id
 		JOIN GESTORES_DE_DATOS.Rubro r ON r.rubro_id = sr.rubro_id
+		JOIN GESTORES_DE_DATOS.Marca_Modelo_Producto mmp ON mmp.producto_id = p.producto_id
+		JOIN GESTORES_DE_DATOS.Marca m ON m.marca_id = mmp.marca_id
 		JOIN GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion rsp 
-			ON rsp.publicacion = pub.publicacion_codigo AND rsp.subRubro = sr.sub_rubro AND rsp.rubro = r.rubro_descripcion
+			ON rsp.subRubro = sr.sub_rubro AND rsp.rubro = r.rubro_descripcion AND rsp.marca = m.marca
 		JOIN GESTORES_DE_DATOS.dimension_tiempo t ON t.mes = MONTH(pub.publicacion_fecha_inicio) AND t.anio = YEAR(pub.publicacion_fecha_inicio)
+		GROUP BY t.id,rsp.id
 GO
 
---EL ID DEL RANGO HORARIO SE ENCUENTRA HARDCODEADO YA QUE NO HAY HORARIO, A MENOS Q ACEPTEN EL DEL ENVIO
---101.324
+--101.283
 INSERT INTO GESTORES_DE_DATOS.hecho_venta(id_tiempo,id_rubro_subRubro_publicacion,id_ubicacion_almacen,
 	id_rango_etario,id_rango_horario,id_ubicacion_cliente,id_ubicacion_vendedor,
 	monto_total_venta)
@@ -270,7 +270,7 @@ INSERT INTO GESTORES_DE_DATOS.hecho_venta(id_tiempo,id_rubro_subRubro_publicacio
 			ON ubVend.localidad = lVend.localidad AND ubVend.provincia = provVend.provincia
 		GROUP BY dt.id,rsp.id,ub.id,re.id,ubCli.id,ubVend.id;
 GO
-
+--82186
 INSERT INTO GESTORES_DE_DATOS.hecho_pago(id_tiempo,id_tipo_medio_pago,id_ubicacion_cliente,monto_en_cuotas,monto_pago)
 	SELECT dt.id, dtmp.tipo_medio_pago_id, du.id, SUM((CASE
 			WHEN p.pago_cant_cuotas > 1 THEN p.pago_importe
@@ -289,13 +289,13 @@ INSERT INTO GESTORES_DE_DATOS.hecho_pago(id_tiempo,id_tipo_medio_pago,id_ubicaci
 		JOIN GESTORES_DE_DATOS.dimension_ubicacion du ON du.localidad = l.localidad AND du.provincia = prov.provincia
 		GROUP BY dt.id,dtmp.tipo_medio_pago_id,du.id;
 GO
-
+--103308
 INSERT INTO GESTORES_DE_DATOS.hecho_envio(id_tiempo,id_ubicacion_almacen,id_ubicacion_cliente,
 	id_tipo_envio,cant_envios_cumplidos,cant_envios_totales,monto_envio)
 	SELECT dt.id 'tiempo',dua.id 'almacen',duc.id 'cliente',dte.id 'tipoEnvio',
 		COUNT((CASE
 			WHEN DATEPART(HOUR,e.envio_fecha_entrega) BETWEEN e.envio_hora_inicio AND e.envio_hora_fin THEN 1
-			WHEN DATEPART(HOUR,e.envio_fecha_entrega) NOT BETWEEN e.envio_hora_inicio AND e.envio_hora_fin THEN NULL
+			WHEN DATEPART(HOUR,e.envio_fecha_entrega) NOT BETWEEN e.envio_hora_inicio AND e.envio_hora_fin THEN 0
 		END)),COUNT(*) 'Total Envios',SUM(e.envio_costo) 'monto Total'
 		FROM GESTORES_DE_DATOS.Envio e
 		JOIN GESTORES_DE_DATOS.dimension_tiempo dt 

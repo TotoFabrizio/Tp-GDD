@@ -62,19 +62,19 @@ DROP VIEW GESTORES_DE_DATOS.Localidades_que_pagan_mayor_costo_envio;--8
 DROP VIEW GESTORES_DE_DATOS.Porcentaje_facturacion_por_concepto;--9
 DROP VIEW GESTORES_DE_DATOS.Facturacion_por_provincia;--10
 
-DROP TABLE GESTORES_DE_DATOS.hecho_facturacion;
-DROP TABLE GESTORES_DE_DATOS.hecho_publicacion;
-DROP TABLE GESTORES_DE_DATOS.hecho_venta;
-DROP TABLE GESTORES_DE_DATOS.hecho_pago;
-DROP TABLE GESTORES_DE_DATOS.hecho_envio;
-DROP TABLE GESTORES_DE_DATOS.dimension_concepto;
-DROP TABLE GESTORES_DE_DATOS.dimension_rango_etario;
-DROP TABLE GESTORES_DE_DATOS.dimension_rango_horario;
-DROP TABLE GESTORES_DE_DATOS.dimension_rubro_subRubro_publicacion;
-DROP TABLE GESTORES_DE_DATOS.dimension_tiempo;
-DROP TABLE GESTORES_DE_DATOS.dimension_tipo_envio;
-DROP TABLE GESTORES_DE_DATOS.dimension_tipo_medio_pago;
-DROP TABLE GESTORES_DE_DATOS.dimension_ubicacion;
+DROP TABLE GESTORES_DE_DATOS.BI_hecho_facturacion;
+DROP TABLE GESTORES_DE_DATOS.BI_hecho_publicacion;
+DROP TABLE GESTORES_DE_DATOS.BI_hecho_venta;
+DROP TABLE GESTORES_DE_DATOS.BI_hecho_pago;
+DROP TABLE GESTORES_DE_DATOS.BI_hecho_envio;
+DROP TABLE GESTORES_DE_DATOS.BI_dimension_concepto;
+DROP TABLE GESTORES_DE_DATOS.BI_dimension_rango_etario;
+DROP TABLE GESTORES_DE_DATOS.BI_dimension_rango_horario;
+DROP TABLE GESTORES_DE_DATOS.BI_dimension_rubro_subRubro_publicacion;
+DROP TABLE GESTORES_DE_DATOS.BI_dimension_tiempo;
+DROP TABLE GESTORES_DE_DATOS.BI_dimension_tipo_envio;
+DROP TABLE GESTORES_DE_DATOS.BI_dimension_tipo_medio_pago;
+DROP TABLE GESTORES_DE_DATOS.BI_dimension_ubicacion;
 
 DROP SCHEMA GESTORES_DE_DATOS
 

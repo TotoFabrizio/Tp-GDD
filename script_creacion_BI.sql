@@ -164,7 +164,7 @@ INSERT INTO GESTORES_DE_DATOS.BI_dimension_rango_etario(rango)
 					END) FROM GESTORES_DE_DATOS.Cliente c
 GO
 
---34629
+--2971
 INSERT INTO GESTORES_DE_DATOS.BI_dimension_rubro_subRubro_publicacion(rubro,subRubro,marca)
 	SELECT DISTINCT r.rubro_descripcion,sr.sub_rubro,m.marca
 		FROM GESTORES_DE_DATOS.Producto pr
@@ -239,8 +239,10 @@ INSERT INTO GESTORES_DE_DATOS.BI_hecho_venta(id_tiempo,id_rubro_subRubro_publica
 		JOIN GESTORES_DE_DATOS.Producto p ON p.producto_id = pub.producto_id
 		JOIN GESTORES_DE_DATOS.Sub_rubro sr ON sr.sub_rubro_id = p.sub_rubro_id
 		JOIN GESTORES_DE_DATOS.Rubro r ON r.rubro_id = sr.rubro_id
+		JOIN GESTORES_DE_DATOS.Marca_Modelo_Producto mmp ON	p.producto_id = mmp.producto_id
+		JOIN GESTORES_DE_DATOS.Marca m ON m.marca_id = mmp.marca_id
 		JOIN GESTORES_DE_DATOS.BI_dimension_rubro_subRubro_publicacion rsp 
-			ON rsp.publicacion = pub.publicacion_codigo AND rsp.subRubro = sr.sub_rubro AND rsp.rubro = r.rubro_descripcion
+			ON rsp.subRubro = sr.sub_rubro AND rsp.rubro = r.rubro_descripcion AND rsp.marca = m.marca
 		JOIN GESTORES_DE_DATOS.Almacen a ON a.almacen_codigo = pub.almacen_codigo
 		JOIN GESTORES_DE_DATOS.Localidad l ON l.localidad_id = a.localidad_id
 		JOIN GESTORES_DE_DATOS.Provincia prov ON prov.provincia_id = a.provincia_id AND prov.provincia_id = l.provincia_id
